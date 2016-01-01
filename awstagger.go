@@ -23,29 +23,13 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-var (
-	quiet   = kingpin.Flag("quiet", "Minimal/no output").Short('q').Bool()
-	verbose = kingpin.Flag("verbose", "Verbose output").Short('v').Bool()
-
-	regions = kingpin.Flag("region", "AWS region to process. (repeatable)").Required().Short('r').Strings()
-	tags    = kingpin.Flag("tag", "Tag to set/update on all selected resources. (repeatable)").Short('t').PlaceHolder("KEY=VALUE").Strings()
-	rmTags  = kingpin.Flag("rm-tag", "Tag key to remove from all selected resources. (repeatable)").PlaceHolder("KEY").Strings()
-
-	doInstances = kingpin.Flag("instances", "Tag EC2 instances. (default: true)").Default("true").Bool()
-)
-
-func main() {
+func init() {
 	kingpin.Version("0.0.1")
 	kingpin.Parse()
+}
 
-	ctx := context{
-		quiet:       *quiet,
-		verbose:     *verbose,
-		regions:     *regions,
-		tags:        *tags,
-		rmTags:      *rmTags,
-		doInstances: *doInstances,
-	}
+func main() {
+	ctx := createContext()
 
 	awsSession := session.New()
 
