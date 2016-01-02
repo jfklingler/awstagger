@@ -18,7 +18,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/jfklingler/awstagger/context"
+	"github.com/jfklingler/awstagger/ec2tags"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -29,18 +30,11 @@ func init() {
 }
 
 func main() {
-	ctx := createContext()
+	ctx := context.New()
 
-	awsSession := session.New()
+	for _, region := range ctx.Regions {
+		ctx.Print(fmt.Sprintf("Processing region %s...", region))
 
-	for _, region := range ctx.regions {
-		ctx.print(fmt.Sprintf("Processing region %s...", region))
-
-		switch {
-		case ctx.doEc2Instances:
-			TagInstances(ctx, awsSession, region)
-		case ctx.doEc2Amis:
-			TagAmis(ctx, awsSession, region)
-		}
+		ec2tags.Process(ctx, region)
 	}
 }

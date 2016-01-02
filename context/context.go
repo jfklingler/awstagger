@@ -13,11 +13,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package context
 
 import (
 	"fmt"
 	"strings"
+
+	"github.com/aws/aws-sdk-go/aws/session"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -36,19 +38,25 @@ var (
 	allRegions = []string{"us-east-1", "us-west-1", "us-west-2", "eu-west-1", "eu-central-1", "ap-southeast-1", "ap-southeast-2", "ap-northeast-1", "sa-east-1"}
 )
 
-type context struct {
-	quiet   bool
-	verbose bool
-
-	regions []string
-	tags    map[string]string
-	rmTags  []string
-
-	doEc2Instances bool
-	doEc2Amis      bool
+type tagFlags struct {
+	Ec2Instances bool
+	Ec2Amis      bool
 }
 
-func createContext() context {
+type Context struct {
+	AwsSession *session.Session
+
+	Quiet   bool
+	Verbose bool
+
+	Regions []string
+	Tags    map[string]string
+	RmTags  []string
+
+	TagFlags tagFlags
+}
+
+func New() Context {
 	tagMap := make(map[string]string)
 	for _, tag := range *tags {
 		kv := strings.SplitN(tag, "=", 2)
@@ -59,27 +67,31 @@ func createContext() context {
 		regions = &allRegions
 	}
 
-	return context{
-		quiet:   *quiet,
-		verbose: *verbose,
+	return Context{
+		AwsSession: session.New(),
 
-		regions: *regions,
-		tags:    tagMap,
-		rmTags:  *rmTags,
+		Quiet:   *quiet,
+		Verbose: *verbose,
 
-		doEc2Instances: *doEc2Instances,
-		doEc2Amis:      *doEc2Amis,
+		Regions: *regions,
+		Tags:    tagMap,
+		RmTags:  *rmTags,
+
+		TagFlags: tagFlags{
+			Ec2Instances: *doEc2Instances,
+			Ec2Amis:      *doEc2Amis,
+		},
 	}
 }
 
-func (c context) print(line string) {
-	if !c.quiet {
+func (c Context) Print(line string) {
+	if !c.Quiet {
 		fmt.Println(line)
 	}
 }
 
-func (c context) printVerbose(line string) {
-	if c.verbose && !c.quiet {
+func (c Context) PrintVerbose(line string) {
+	if c.Verbose && !c.Quiet {
 		fmt.Println(line)
 	}
 }

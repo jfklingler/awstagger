@@ -13,43 +13,42 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package ec2tags
 
 import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 
 	"gopkg.in/alecthomas/kingpin.v2"
+
+	"github.com/jfklingler/awstagger/context"
 )
 
-func TagInstances(ctx context, session *session.Session, region string) {
-	ctx.print("  Processing EC2 instances...")
+func Process(ctx context.Context, region string) {
+	svc := ec2.New(ctx.AwsSession, &aws.Config{Region: aws.String(region)})
 
-	svc := ec2.New(session, &aws.Config{Region: aws.String(region)})
+	switch {
 
-	instanceIds := getInstanceIds(*svc)
+	case ctx.TagFlags.Ec2Instances:
+		ctx.Print("  Processing EC2 instances...")
+		applyTags(ctx, svc, getInstanceIds(svc))
+		fallthrough
 
-	updateTags(ctx, *svc, instanceIds)
-	deleteTags(ctx, *svc, instanceIds)
-	printTags(ctx, *svc, instanceIds)
+	case ctx.TagFlags.Ec2Amis:
+		ctx.Print("  Processing AMIs...")
+		applyTags(ctx, svc, getAmiIds(svc))
+	}
 }
 
-func TagAmis(ctx context, session *session.Session, region string) {
-	ctx.print("  Processing AMIs...")
-
-	svc := ec2.New(session, &aws.Config{Region: aws.String(region)})
-
-	amiIds := getAmiIds(*svc)
-
-	updateTags(ctx, *svc, amiIds)
-	deleteTags(ctx, *svc, amiIds)
-	printTags(ctx, *svc, amiIds)
+func applyTags(ctx context.Context, svc *ec2.EC2, resourceIds []*string) {
+	updateTags(ctx, *svc, resourceIds)
+	deleteTags(ctx, *svc, resourceIds)
+	printTags(ctx, *svc, resourceIds)
 }
 
-func getInstanceIds(svc ec2.EC2) []*string {
+func getInstanceIds(svc *ec2.EC2) []*string {
 	instancesOut, err := svc.DescribeInstances(nil)
 
 	kingpin.FatalIfError(err, "Could not retrieve EC2 instances")
@@ -64,7 +63,7 @@ func getInstanceIds(svc ec2.EC2) []*string {
 	return instanceIds
 }
 
-func getAmiIds(svc ec2.EC2) []*string {
+func getAmiIds(svc *ec2.EC2) []*string {
 	// This seems idiotic. How can I simply create a []*string literal???
 	var owners []*string
 	self := "self"
@@ -84,14 +83,14 @@ func getAmiIds(svc ec2.EC2) []*string {
 	return imageIds
 }
 
-func updateTags(ctx context, svc ec2.EC2, instanceIds []*string) {
-	if len(ctx.tags) <= 0 {
+func updateTags(ctx context.Context, svc ec2.EC2, instanceIds []*string) {
+	if len(ctx.Tags) <= 0 {
 		return
 	}
 
 	resp, err := svc.CreateTags(&ec2.CreateTagsInput{
 		Resources: instanceIds,
-		Tags:      tagArgsToEc2Tags(ctx.tags),
+		Tags:      tagArgsToEc2Tags(ctx.Tags),
 	})
 
 	kingpin.FatalIfError(err, "Could not update tags for EC2 instances %s", instanceIds)
@@ -99,14 +98,14 @@ func updateTags(ctx context, svc ec2.EC2, instanceIds []*string) {
 	fmt.Println(resp)
 }
 
-func deleteTags(ctx context, svc ec2.EC2, instanceIds []*string) {
-	if len(ctx.rmTags) <= 0 {
+func deleteTags(ctx context.Context, svc ec2.EC2, instanceIds []*string) {
+	if len(ctx.RmTags) <= 0 {
 		return
 	}
 
 	resp, err := svc.DeleteTags(&ec2.DeleteTagsInput{
 		Resources: instanceIds,
-		Tags:      rmtagArgsToEc2Tags(ctx.rmTags),
+		Tags:      rmtagArgsToEc2Tags(ctx.RmTags),
 	})
 
 	kingpin.FatalIfError(err, "Could not delete tags for EC2 instances %s", instanceIds)
@@ -129,17 +128,17 @@ func getTags(svc ec2.EC2, instanceIds []*string) ec2.DescribeTagsOutput {
 	return *resp
 }
 
-func printTags(ctx context, svc ec2.EC2, instanceIds []*string) {
-	if ctx.verbose {
+func printTags(ctx context.Context, svc ec2.EC2, instanceIds []*string) {
+	if ctx.Verbose {
 		tagsOut := getTags(svc, instanceIds)
 		lastID := ""
 
 		for _, td := range tagsOut.Tags {
 			if lastID != *td.ResourceId {
-				ctx.printVerbose(fmt.Sprintf("    Instance %s", *td.ResourceId))
+				ctx.PrintVerbose(fmt.Sprintf("    Instance %s", *td.ResourceId))
 				lastID = *td.ResourceId
 			}
-			ctx.printVerbose(fmt.Sprintf("      %s=%s", *td.Key, *td.Value))
+			ctx.PrintVerbose(fmt.Sprintf("      %s=%s", *td.Key, *td.Value))
 		}
 	}
 }
