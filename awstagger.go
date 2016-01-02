@@ -36,8 +36,11 @@ func main() {
 	for _, region := range ctx.regions {
 		ctx.print(fmt.Sprintf("Processing region %s...", region))
 
-		if ctx.doInstances {
-			tagInstances(ctx, awsSession, region)
+		switch {
+		case ctx.doEc2Instances:
+			TagInstances(ctx, awsSession, region)
+		case ctx.doEc2Amis:
+			TagAmis(ctx, awsSession, region)
 		}
 	}
 }

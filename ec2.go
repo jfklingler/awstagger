@@ -25,7 +25,7 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-func tagInstances(ctx context, session *session.Session, region string) {
+func TagInstances(ctx context, session *session.Session, region string) {
 	ctx.print("  Processing EC2 instances...")
 
 	svc := ec2.New(session, &aws.Config{Region: aws.String(region)})
@@ -35,6 +35,18 @@ func tagInstances(ctx context, session *session.Session, region string) {
 	updateTags(ctx, *svc, instanceIds)
 	deleteTags(ctx, *svc, instanceIds)
 	printTags(ctx, *svc, instanceIds)
+}
+
+func TagAmis(ctx context, session *session.Session, region string) {
+	ctx.print("  Processing AMIs...")
+
+	svc := ec2.New(session, &aws.Config{Region: aws.String(region)})
+
+	amiIds := getAmiIds(*svc)
+
+	updateTags(ctx, *svc, amiIds)
+	deleteTags(ctx, *svc, amiIds)
+	printTags(ctx, *svc, amiIds)
 }
 
 func getInstanceIds(svc ec2.EC2) []*string {
@@ -50,6 +62,26 @@ func getInstanceIds(svc ec2.EC2) []*string {
 	}
 
 	return instanceIds
+}
+
+func getAmiIds(svc ec2.EC2) []*string {
+	// This seems idiotic. How can I simply create a []*string literal???
+	var owners []*string
+	self := "self"
+	owners = append(owners, &self)
+
+	imagesOut, err := svc.DescribeImages(&ec2.DescribeImagesInput{
+		Owners: []*string{&self},
+	})
+
+	kingpin.FatalIfError(err, "Could not retrieve EC2 instances")
+
+	var imageIds []*string
+	for idx := range imagesOut.Images {
+		imageIds = append(imageIds, imagesOut.Images[idx].ImageId)
+	}
+
+	return imageIds
 }
 
 func updateTags(ctx context, svc ec2.EC2, instanceIds []*string) {

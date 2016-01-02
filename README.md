@@ -1,9 +1,14 @@
 A simple tool for bulk adding/updating/removing tags from AWS resources.
 
 ## Examples
-To simply list the tags on all resources in a region:
+To simply list the tags on all resources in all regions:
 ```bash
-awstagger --verbose --region us-east-1
+awstagger --verbose
+```
+
+To list the tags on all resources in some regions:
+```bash
+awstagger --verbose --region us-east-1 --region us-west-2
 ```
 
 To add tags on all resources in a region:

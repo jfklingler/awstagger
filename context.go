@@ -30,7 +30,8 @@ var (
 	tags    = kingpin.Flag("tag", "Tag to set/update on all selected resources. (repeatable)").Short('t').PlaceHolder("KEY=VALUE").Strings()
 	rmTags  = kingpin.Flag("rm-tag", "Tag key to remove from all selected resources. (repeatable)").PlaceHolder("KEY").Strings()
 
-	doInstances = kingpin.Flag("instances", "Tag EC2 instances. (default: true)").Default("true").Bool()
+	doEc2Instances = kingpin.Flag("ec2-instance", "Tag EC2 instances. (default: true)").Default("true").Bool()
+	doEc2Amis      = kingpin.Flag("ec2-ami", "Tag EC2 AMIs. (default: true)").Default("true").Bool()
 
 	allRegions = []string{"us-east-1", "us-west-1", "us-west-2", "eu-west-1", "eu-central-1", "ap-southeast-1", "ap-southeast-2", "ap-northeast-1", "sa-east-1"}
 )
@@ -43,7 +44,8 @@ type context struct {
 	tags    map[string]string
 	rmTags  []string
 
-	doInstances bool
+	doEc2Instances bool
+	doEc2Amis      bool
 }
 
 func createContext() context {
@@ -65,7 +67,8 @@ func createContext() context {
 		tags:    tagMap,
 		rmTags:  *rmTags,
 
-		doInstances: *doInstances,
+		doEc2Instances: *doEc2Instances,
+		doEc2Amis:      *doEc2Amis,
 	}
 }
 
