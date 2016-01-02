@@ -17,6 +17,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -37,19 +38,25 @@ type context struct {
 	verbose bool
 
 	regions []string
-	tags    []string
+	tags    map[string]string
 	rmTags  []string
 
 	doInstances bool
 }
 
 func createContext() context {
+	tagMap := make(map[string]string)
+	for _, tag := range *tags {
+		kv := strings.SplitN(tag, "=", 2)
+		tagMap[kv[0]] = kv[1]
+	}
+
 	return context{
 		quiet:   *quiet,
 		verbose: *verbose,
 
 		regions: *regions,
-		tags:    *tags,
+		tags:    tagMap,
 		rmTags:  *rmTags,
 
 		doInstances: *doInstances,
