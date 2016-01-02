@@ -23,14 +23,16 @@ import (
 )
 
 var (
-	quiet   = kingpin.Flag("quiet", "Minimal/no output").Short('q').Bool()
-	verbose = kingpin.Flag("verbose", "Verbose output").Short('v').Bool()
+	quiet   = kingpin.Flag("quiet", "Minimal/no output.").Short('q').Bool()
+	verbose = kingpin.Flag("verbose", "Verbose output.").Short('v').Bool()
 
-	regions = kingpin.Flag("region", "AWS region to process. (repeatable)").Required().Short('r').Strings()
+	regions = kingpin.Flag("region", "AWS region to process. (repeatable, default: all standard regions)").Short('r').Strings()
 	tags    = kingpin.Flag("tag", "Tag to set/update on all selected resources. (repeatable)").Short('t').PlaceHolder("KEY=VALUE").Strings()
 	rmTags  = kingpin.Flag("rm-tag", "Tag key to remove from all selected resources. (repeatable)").PlaceHolder("KEY").Strings()
 
 	doInstances = kingpin.Flag("instances", "Tag EC2 instances. (default: true)").Default("true").Bool()
+
+	allRegions = []string{"us-east-1", "us-west-1", "us-west-2", "eu-west-1", "eu-central-1", "ap-southeast-1", "ap-southeast-2", "ap-northeast-1", "sa-east-1"}
 )
 
 type context struct {
@@ -49,6 +51,10 @@ func createContext() context {
 	for _, tag := range *tags {
 		kv := strings.SplitN(tag, "=", 2)
 		tagMap[kv[0]] = kv[1]
+	}
+
+	if len(*regions) == 0 {
+		regions = &allRegions
 	}
 
 	return context{
