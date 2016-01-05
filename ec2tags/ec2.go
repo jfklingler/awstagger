@@ -49,8 +49,11 @@ func Process(ctx context.Context, region string) {
 	case ctx.TagFlags.Ec2SecurityGroups:
 		ctx.Print("  Processing EC2 security groups...")
 		applyTags(ctx, svc, getSecurityGroupIds(svc))
+		fallthrough
 
-	// net interface
+	case ctx.TagFlags.Ec2NetInterfaces:
+		ctx.Print("  Processing EC2 network interfaces...")
+		applyTags(ctx, svc, getNetIfaceIds(svc))
 	}
 }
 

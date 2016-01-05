@@ -28,6 +28,7 @@ var (
 	doEc2Snapshots = kingpin.Flag("ec2-snapshot", "Tag EC2 snapshots. (default: true)").Default("true").Bool()
 	doEc2Vpcs      = kingpin.Flag("ec2-vpc", "Tag EC2 VPCs. (default: true)").Default("true").Bool()
 	doEc2SGs       = kingpin.Flag("ec2-security-groups", "Tag EC2 security groups. (default: true)").Default("true").Bool()
+	doEc2NIs       = kingpin.Flag("ec2-network-interfaces", "Tag EC2 network interfaces. (default: true)").Default("true").Bool()
 
 	allRegions = []string{"us-east-1", "us-west-1", "us-west-2", "eu-west-1", "eu-central-1", "ap-southeast-1", "ap-southeast-2", "ap-northeast-1", "sa-east-1"}
 )
@@ -39,6 +40,7 @@ type tagFlags struct {
 	Ec2Snapshots      bool
 	Ec2Vpcs           bool
 	Ec2SecurityGroups bool
+	Ec2NetInterfaces  bool
 }
 
 type Context struct {
@@ -82,6 +84,7 @@ func New() Context {
 			Ec2Snapshots:      *doEc2Snapshots,
 			Ec2Vpcs:           *doEc2Vpcs,
 			Ec2SecurityGroups: *doEc2SGs,
+			Ec2NetInterfaces:  *doEc2NIs,
 		},
 	}
 }

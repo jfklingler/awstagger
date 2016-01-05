@@ -104,3 +104,16 @@ func getSecurityGroupIds(svc *ec2.EC2) []*string {
 
 	return sgIds
 }
+
+func getNetIfaceIds(svc *ec2.EC2) []*string {
+	networkInterfaces, err := svc.DescribeNetworkInterfaces(&ec2.DescribeNetworkInterfacesInput{})
+
+	kingpin.FatalIfError(err, "Could not retrieve EC2 network interfaces")
+
+	var niIds []*string
+	for _, ni := range networkInterfaces.NetworkInterfaces {
+		niIds = append(niIds, ni.NetworkInterfaceId)
+	}
+
+	return niIds
+}
