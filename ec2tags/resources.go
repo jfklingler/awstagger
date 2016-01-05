@@ -82,7 +82,7 @@ func getSnapshotIds(svc *ec2.EC2) []*string {
 func getVpcIds(svc *ec2.EC2) []*string {
 	vpcsOut, err := svc.DescribeVpcs(&ec2.DescribeVpcsInput{})
 
-	kingpin.FatalIfError(err, "Could not retrieve EC2 snapshots")
+	kingpin.FatalIfError(err, "Could not retrieve EC2 VPCs")
 
 	var vpcIds []*string
 	for _, vpc := range vpcsOut.Vpcs {
