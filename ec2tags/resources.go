@@ -93,15 +93,7 @@ func getVpcIds(svc *ec2.EC2) []*string {
 }
 
 func getSecurityGroupIds(svc *ec2.EC2) []*string {
-	ownerId := "owner-id"
-	securityGroups, err := svc.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{
-		Filters: []*ec2.Filter{
-			{
-				Name: &ownerId,
-				Values: []*string{&self},
-			},
-		},
-	})
+	securityGroups, err := svc.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{})
 
 	kingpin.FatalIfError(err, "Could not retrieve EC2 security groups")
 
