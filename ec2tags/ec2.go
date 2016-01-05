@@ -7,6 +7,7 @@ package ec2tags
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -23,87 +24,96 @@ func Process(ctx context.Context, region string) {
 
 	case ctx.TagFlags.Ec2Instances:
 		ctx.Print("  Processing EC2 instances...")
-		applyTags(ctx, svc, getInstanceIds(svc))
+		processInstances(svc, &ctx.BatchSize, applyTags(ctx, svc))
 		fallthrough
 
 	case ctx.TagFlags.Ec2Amis:
 		ctx.Print("  Processing EC2 AMIs...")
-		applyTags(ctx, svc, getAmiIds(svc))
+		processAmis(svc, ctx.BatchSize, applyTags(ctx, svc))
 		fallthrough
 
 	case ctx.TagFlags.Ec2Volumes:
 		ctx.Print("  Processing EC2 volumes...")
-		applyTags(ctx, svc, getVolumeIds(svc))
+		processVolumes(svc, ctx.BatchSize, applyTags(ctx, svc))
 		fallthrough
 
 	case ctx.TagFlags.Ec2Snapshots:
 		ctx.Print("  Processing EC2 snapshots...")
-		applyTags(ctx, svc, getSnapshotIds(svc))
+		processSnapshots(svc, ctx.BatchSize, applyTags(ctx, svc))
 		fallthrough
 
 	case ctx.TagFlags.Ec2Vpcs:
 		ctx.Print("  Processing EC2 VPCs...")
-		applyTags(ctx, svc, getVpcIds(svc))
+		processVpcs(svc, ctx.BatchSize, applyTags(ctx, svc))
 		fallthrough
 
 	case ctx.TagFlags.Ec2SecurityGroups:
 		ctx.Print("  Processing EC2 security groups...")
-		applyTags(ctx, svc, getSecurityGroupIds(svc))
+		processSecurityGroups(svc, ctx.BatchSize, applyTags(ctx, svc))
 		fallthrough
 
 	case ctx.TagFlags.Ec2NetInterfaces:
 		ctx.Print("  Processing EC2 network interfaces...")
-		applyTags(ctx, svc, getNetIfaceIds(svc))
+		processNetInterfaces(svc, ctx.BatchSize, applyTags(ctx, svc))
 	}
 }
 
-func applyTags(ctx context.Context, svc *ec2.EC2, resourceIds []*string) {
-	updateTags(ctx, *svc, resourceIds)
-	deleteTags(ctx, *svc, resourceIds)
-	printTags(ctx, *svc, resourceIds)
+func applyTags(ctx context.Context, svc *ec2.EC2) func([]*string) {
+	return func (resourceIds []*string) {
+		nextWindow := func (ids []*string) ([]*string, []*string) {
+			w := int(math.Min(float64(len(ids)), float64(200)))
+			return ids[0:w], ids[w:]
+		}
+
+		for thisRound, remaining := nextWindow(resourceIds); len(thisRound) > 0; thisRound, remaining = nextWindow(remaining){
+			updateTags(ctx, *svc, thisRound)
+			deleteTags(ctx, *svc, thisRound)
+			printTags(ctx, *svc, thisRound)
+		}
+	}
 }
 
-func updateTags(ctx context.Context, svc ec2.EC2, instanceIds []*string) {
+func updateTags(ctx context.Context, svc ec2.EC2, resourceIds []*string) {
 	if len(ctx.Tags) <= 0 {
 		return
 	}
 
 	resp, err := svc.CreateTags(&ec2.CreateTagsInput{
-		Resources: instanceIds,
+		Resources: resourceIds,
 		Tags:      tagArgsToEc2Tags(ctx.Tags),
 	})
 
-	kingpin.FatalIfError(err, "Could not update tags for EC2 instances %s", instanceIds)
+	kingpin.FatalIfError(err, "Could not update tags for EC2 resources %s", resourceIds)
 
 	fmt.Println(resp)
 }
 
-func deleteTags(ctx context.Context, svc ec2.EC2, instanceIds []*string) {
+func deleteTags(ctx context.Context, svc ec2.EC2, resourceIds []*string) {
 	if len(ctx.RmTags) <= 0 {
 		return
 	}
 
 	resp, err := svc.DeleteTags(&ec2.DeleteTagsInput{
-		Resources: instanceIds,
+		Resources: resourceIds,
 		Tags:      rmtagArgsToEc2Tags(ctx.RmTags),
 	})
 
-	kingpin.FatalIfError(err, "Could not delete tags for EC2 instances %s", instanceIds)
+	kingpin.FatalIfError(err, "Could not delete tags for EC2 resources %s", resourceIds)
 
 	fmt.Println(resp)
 }
 
-func getTags(svc ec2.EC2, instanceIds []*string) ec2.DescribeTagsOutput {
+func getTags(svc ec2.EC2, resourceIds []*string) ec2.DescribeTagsOutput {
 	resp, err := svc.DescribeTags(&ec2.DescribeTagsInput{
 		Filters: []*ec2.Filter{
 			{ // Required
 				Name:   aws.String("resource-id"),
-				Values: instanceIds,
+				Values: resourceIds,
 			},
 		},
 	})
 
-	kingpin.FatalIfError(err, "Could not retrieve tags for EC2 instances %s", instanceIds)
+	kingpin.FatalIfError(err, "Could not retrieve tags for EC2 resources %s", resourceIds)
 
 	return *resp
 }
@@ -115,7 +125,7 @@ func printTags(ctx context.Context, svc ec2.EC2, instanceIds []*string) {
 
 		for _, td := range tagsOut.Tags {
 			if lastID != *td.ResourceId {
-				ctx.PrintVerbose(fmt.Sprintf("    Instance %s", *td.ResourceId))
+				ctx.PrintVerbose(fmt.Sprintf("    Resource ID %s", *td.ResourceId))
 				lastID = *td.ResourceId
 			}
 			ctx.PrintVerbose(fmt.Sprintf("      %s=%s", *td.Key, *td.Value))

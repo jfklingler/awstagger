@@ -17,6 +17,7 @@ import (
 var (
 	quiet   = kingpin.Flag("quiet", "Minimal/no output.").Short('q').Bool()
 	verbose = kingpin.Flag("verbose", "Verbose output.").Short('v').Bool()
+	batch   = kingpin.Flag("batch", "Batch size. (default: 1000)").Short('b').Default("1000").Int64()
 
 	regions = kingpin.Flag("region", "AWS region to process. (repeatable, default: all standard regions)").Short('r').Strings()
 	tags    = kingpin.Flag("tag", "Tag to set/update on all selected resources. (repeatable)").Short('t').PlaceHolder("KEY=VALUE").Strings()
@@ -46,8 +47,9 @@ type tagFlags struct {
 type Context struct {
 	AwsSession *session.Session
 
-	Quiet   bool
-	Verbose bool
+	Quiet     bool
+	Verbose   bool
+	BatchSize int64
 
 	Regions []string
 	Tags    map[string]string
@@ -70,8 +72,9 @@ func New() Context {
 	return Context{
 		AwsSession: session.New(),
 
-		Quiet:   *quiet,
-		Verbose: *verbose,
+		Quiet:     *quiet,
+		Verbose:   *verbose,
+		BatchSize: *batch,
 
 		Regions: *regions,
 		Tags:    tagMap,

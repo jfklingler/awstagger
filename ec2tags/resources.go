@@ -15,22 +15,27 @@ var (
 	self = "self"
 )
 
-func getInstanceIds(svc *ec2.EC2) []*string {
-	instancesOut, err := svc.DescribeInstances(nil)
+func processInstances(svc *ec2.EC2, pageSize *int64, apply func([]*string)) {
+	err := svc.DescribeInstancesPages(&ec2.DescribeInstancesInput{
+		MaxResults: pageSize,
+	},
+		func(instancesOut *ec2.DescribeInstancesOutput, lastPage bool) bool {
+			var instanceIds []*string
+			for idx := range instancesOut.Reservations {
+				for _, instance := range instancesOut.Reservations[idx].Instances {
+					instanceIds = append(instanceIds, instance.InstanceId)
+				}
+			}
+
+			apply(instanceIds)
+
+			return !lastPage
+		})
 
 	kingpin.FatalIfError(err, "Could not retrieve EC2 instances")
-
-	var instanceIds []*string
-	for idx := range instancesOut.Reservations {
-		for _, instance := range instancesOut.Reservations[idx].Instances {
-			instanceIds = append(instanceIds, instance.InstanceId)
-		}
-	}
-
-	return instanceIds
 }
 
-func getAmiIds(svc *ec2.EC2) []*string {
+func processAmis(svc *ec2.EC2, pageSize int64, apply func([]*string)) {
 	imagesOut, err := svc.DescribeImages(&ec2.DescribeImagesInput{
 		Owners: []*string{&self},
 	})
@@ -42,44 +47,50 @@ func getAmiIds(svc *ec2.EC2) []*string {
 		imageIds = append(imageIds, image.ImageId)
 	}
 
-	return imageIds
+	apply(imageIds)
 }
 
-func getVolumeIds(svc *ec2.EC2) []*string {
-	volumesOut, err := svc.DescribeVolumes(&ec2.DescribeVolumesInput{})
+func processVolumes(svc *ec2.EC2, pageSize int64, apply func([]*string)) {
+	err := svc.DescribeVolumesPages(&ec2.DescribeVolumesInput{},
+		func(volumesOut *ec2.DescribeVolumesOutput, lastPage bool) bool {
+			var volumeIds []*string
+			for _, volume := range volumesOut.Volumes {
+				volumeIds = append(volumeIds, volume.VolumeId)
+			}
+
+			apply(volumeIds)
+
+			return !lastPage
+		})
 
 	kingpin.FatalIfError(err, "Could not retrieve EC2 volumes")
-
-	var volumeIds []*string
-	for _, volume := range volumesOut.Volumes {
-		volumeIds = append(volumeIds, volume.VolumeId)
-	}
-
-	return volumeIds
 }
 
-func getSnapshotIds(svc *ec2.EC2) []*string {
+func processSnapshots(svc *ec2.EC2, pageSize int64, apply func([]*string)) {
 	ownerId := "owner-id"
-	snapshotsOut, err := svc.DescribeSnapshots(&ec2.DescribeSnapshotsInput{
+
+	err := svc.DescribeSnapshotsPages(&ec2.DescribeSnapshotsInput{
 		Filters: []*ec2.Filter{
 			{
 				Name: &ownerId,
 				Values: []*string{&self},
 			},
 		},
+	}, func(snapshotsOut *ec2.DescribeSnapshotsOutput, lastPage bool) bool {
+		var snapshotIds []*string
+		for _, snapshot := range snapshotsOut.Snapshots {
+			snapshotIds = append(snapshotIds, snapshot.SnapshotId)
+		}
+
+		apply(snapshotIds)
+
+		return !lastPage
 	})
 
 	kingpin.FatalIfError(err, "Could not retrieve EC2 snapshots")
-
-	var snapshotIds []*string
-	for _, snapshot := range snapshotsOut.Snapshots {
-		snapshotIds = append(snapshotIds, snapshot.SnapshotId)
-	}
-
-	return snapshotIds
 }
 
-func getVpcIds(svc *ec2.EC2) []*string {
+func processVpcs(svc *ec2.EC2, pageSize int64, apply func([]*string)) {
 	vpcsOut, err := svc.DescribeVpcs(&ec2.DescribeVpcsInput{})
 
 	kingpin.FatalIfError(err, "Could not retrieve EC2 VPCs")
@@ -89,10 +100,10 @@ func getVpcIds(svc *ec2.EC2) []*string {
 		vpcIds = append(vpcIds, vpc.VpcId)
 	}
 
-	return vpcIds
+	apply(vpcIds)
 }
 
-func getSecurityGroupIds(svc *ec2.EC2) []*string {
+func processSecurityGroups(svc *ec2.EC2, pageSize int64, apply func([]*string)) {
 	securityGroups, err := svc.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{})
 
 	kingpin.FatalIfError(err, "Could not retrieve EC2 security groups")
@@ -102,10 +113,10 @@ func getSecurityGroupIds(svc *ec2.EC2) []*string {
 		sgIds = append(sgIds, sg.GroupId)
 	}
 
-	return sgIds
+	apply(sgIds)
 }
 
-func getNetIfaceIds(svc *ec2.EC2) []*string {
+func processNetInterfaces(svc *ec2.EC2, pageSize int64, apply func([]*string)) {
 	networkInterfaces, err := svc.DescribeNetworkInterfaces(&ec2.DescribeNetworkInterfacesInput{})
 
 	kingpin.FatalIfError(err, "Could not retrieve EC2 network interfaces")
@@ -115,5 +126,5 @@ func getNetIfaceIds(svc *ec2.EC2) []*string {
 		niIds = append(niIds, ni.NetworkInterfaceId)
 	}
 
-	return niIds
+	apply(niIds)
 }
