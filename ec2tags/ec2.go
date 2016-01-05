@@ -16,6 +16,10 @@ import (
 	"github.com/jfklingler/awstagger/context"
 )
 
+var (
+	self = "self"
+)
+
 func Process(ctx context.Context, region string) {
 	svc := ec2.New(ctx.AwsSession, &aws.Config{Region: aws.String(region)})
 
@@ -27,8 +31,24 @@ func Process(ctx context.Context, region string) {
 		fallthrough
 
 	case ctx.TagFlags.Ec2Amis:
-		ctx.Print("  Processing AMIs...")
+		ctx.Print("  Processing EC2 AMIs...")
 		applyTags(ctx, svc, getAmiIds(svc))
+		fallthrough
+
+	case ctx.TagFlags.Ec2Volumes:
+		ctx.Print("  Processing EC2 volumes...")
+		applyTags(ctx, svc, getVolumeIds(svc))
+		fallthrough
+
+	case ctx.TagFlags.Ec2Snapshots:
+		ctx.Print("  Processing EC2 snapshots...")
+		applyTags(ctx, svc, getSnapshotIds(svc))
+
+	// vpc
+
+	// security group
+
+	// net interface
 	}
 }
 
@@ -54,11 +74,6 @@ func getInstanceIds(svc *ec2.EC2) []*string {
 }
 
 func getAmiIds(svc *ec2.EC2) []*string {
-	// This seems idiotic. How can I simply create a []*string literal???
-	var owners []*string
-	self := "self"
-	owners = append(owners, &self)
-
 	imagesOut, err := svc.DescribeImages(&ec2.DescribeImagesInput{
 		Owners: []*string{&self},
 	})
@@ -66,11 +81,45 @@ func getAmiIds(svc *ec2.EC2) []*string {
 	kingpin.FatalIfError(err, "Could not retrieve EC2 instances")
 
 	var imageIds []*string
-	for idx := range imagesOut.Images {
-		imageIds = append(imageIds, imagesOut.Images[idx].ImageId)
+	for _, image := range imagesOut.Images {
+		imageIds = append(imageIds, image.ImageId)
 	}
 
 	return imageIds
+}
+
+func getVolumeIds(svc *ec2.EC2) []*string {
+	volumesOut, err := svc.DescribeVolumes(&ec2.DescribeVolumesInput{})
+
+	kingpin.FatalIfError(err, "Could not retrieve EC2 volumes")
+
+	var volumeIds []*string
+	for _, volume := range volumesOut.Volumes {
+		volumeIds = append(volumeIds, volume.VolumeId)
+	}
+
+	return volumeIds
+}
+
+func getSnapshotIds(svc *ec2.EC2) []*string {
+	ownerId := "owner-id"
+	snapshotsOut, err := svc.DescribeSnapshots(&ec2.DescribeSnapshotsInput{
+		Filters: []*ec2.Filter{
+			{
+				Name: &ownerId,
+				Values: []*string{&self},
+			},
+		},
+	})
+
+	kingpin.FatalIfError(err, "Could not retrieve EC2 snapshots")
+
+	var snapshotIds []*string
+	for _, snapshot := range snapshotsOut.Snapshots {
+		snapshotIds = append(snapshotIds, snapshot.SnapshotId)
+	}
+
+	return snapshotIds
 }
 
 func updateTags(ctx context.Context, svc ec2.EC2, instanceIds []*string) {
