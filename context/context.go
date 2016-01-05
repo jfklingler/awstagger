@@ -27,16 +27,18 @@ var (
 	doEc2Volumes   = kingpin.Flag("ec2-volume", "Tag EC2 volumes. (default: true)").Default("true").Bool()
 	doEc2Snapshots = kingpin.Flag("ec2-snapshot", "Tag EC2 snapshots. (default: true)").Default("true").Bool()
 	doEc2Vpcs      = kingpin.Flag("ec2-vpc", "Tag EC2 VPCs. (default: true)").Default("true").Bool()
+	doEc2SGs       = kingpin.Flag("ec2-security-groups", "Tag EC2 security groups. (default: true)").Default("true").Bool()
 
 	allRegions = []string{"us-east-1", "us-west-1", "us-west-2", "eu-west-1", "eu-central-1", "ap-southeast-1", "ap-southeast-2", "ap-northeast-1", "sa-east-1"}
 )
 
 type tagFlags struct {
-	Ec2Instances bool
-	Ec2Amis      bool
-	Ec2Volumes   bool
-	Ec2Snapshots bool
-	Ec2Vpcs      bool
+	Ec2Instances      bool
+	Ec2Amis           bool
+	Ec2Volumes        bool
+	Ec2Snapshots      bool
+	Ec2Vpcs           bool
+	Ec2SecurityGroups bool
 }
 
 type Context struct {
@@ -74,11 +76,12 @@ func New() Context {
 		RmTags:  *rmTags,
 
 		TagFlags: tagFlags{
-			Ec2Instances: *doEc2Instances,
-			Ec2Amis:      *doEc2Amis,
-			Ec2Volumes:   *doEc2Volumes,
-			Ec2Snapshots: *doEc2Snapshots,
-			Ec2Vpcs:      *doEc2Vpcs,
+			Ec2Instances:      *doEc2Instances,
+			Ec2Amis:           *doEc2Amis,
+			Ec2Volumes:        *doEc2Volumes,
+			Ec2Snapshots:      *doEc2Snapshots,
+			Ec2Vpcs:           *doEc2Vpcs,
+			Ec2SecurityGroups: *doEc2SGs,
 		},
 	}
 }

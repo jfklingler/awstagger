@@ -16,10 +16,6 @@ import (
 	"github.com/jfklingler/awstagger/context"
 )
 
-var (
-	self = "self"
-)
-
 func Process(ctx context.Context, region string) {
 	svc := ec2.New(ctx.AwsSession, &aws.Config{Region: aws.String(region)})
 
@@ -48,8 +44,11 @@ func Process(ctx context.Context, region string) {
 	case ctx.TagFlags.Ec2Vpcs:
 		ctx.Print("  Processing EC2 VPCs...")
 		applyTags(ctx, svc, getVpcIds(svc))
+		fallthrough
 
-	// security group
+	case ctx.TagFlags.Ec2SecurityGroups:
+		ctx.Print("  Processing EC2 security groups...")
+		applyTags(ctx, svc, getSecurityGroupIds(svc))
 
 	// net interface
 	}

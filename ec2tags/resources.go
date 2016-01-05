@@ -11,6 +11,10 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
+var (
+	self = "self"
+)
+
 func getInstanceIds(svc *ec2.EC2) []*string {
 	instancesOut, err := svc.DescribeInstances(nil)
 
@@ -86,4 +90,25 @@ func getVpcIds(svc *ec2.EC2) []*string {
 	}
 
 	return vpcIds
+}
+
+func getSecurityGroupIds(svc *ec2.EC2) []*string {
+	ownerId := "owner-id"
+	securityGroups, err := svc.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{
+		Filters: []*ec2.Filter{
+			{
+				Name: &ownerId,
+				Values: []*string{&self},
+			},
+		},
+	})
+
+	kingpin.FatalIfError(err, "Could not retrieve EC2 security groups")
+
+	var sgIds []*string
+	for _, sg := range securityGroups.SecurityGroups {
+		sgIds = append(sgIds, sg.GroupId)
+	}
+
+	return sgIds
 }
