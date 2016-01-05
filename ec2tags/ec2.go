@@ -43,8 +43,11 @@ func Process(ctx context.Context, region string) {
 	case ctx.TagFlags.Ec2Snapshots:
 		ctx.Print("  Processing EC2 snapshots...")
 		applyTags(ctx, svc, getSnapshotIds(svc))
+		fallthrough
 
-	// vpc
+	case ctx.TagFlags.Ec2Vpcs:
+		ctx.Print("  Processing EC2 VPCs...")
+		applyTags(ctx, svc, getVpcIds(svc))
 
 	// security group
 
