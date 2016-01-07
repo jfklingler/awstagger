@@ -10,6 +10,20 @@ Primary benefits over AWS web console or command line tool are:
 * Simple selectors
 * Simple tag specification
 
+## Installation
+
+### From source
+
+Install and set up [Go](https://golang.org/doc/install)
+
+```
+go get github.com/jfklingler/awstagger
+```
+
+### Homebrew
+
+...coming soon to a Mac near you
+
 ## Examples
 To simply list the tags on all resources in all regions:
 ```bash
