@@ -50,6 +50,15 @@ Do it all in one run:
 awstagger --verbose --region us-east-1 --tag key1=value1 --tag key2=value2 --rm-tag key3 --rm-tag key4
 ```
 
+## Why Go
+
+I initially built similar functionality in Scala as part of my day job (hence, not public). But in choosing Scala (or
+any JVM language for that matter), I limited the usefulness to those people that had a ready JVM. At my day job, this
+wasn't a significant factor, but upon considering wider usability, requiring a JVM was a serious downside. Along
+those same lines, while more generally available, requiring a Python or Ruby environment with the requisite eggs/gems/etc.
+was equally confining. I think the standalone, statically-linked nature of Go binaries is it's most compelling feature
+in terms of command line tools.
+
 ## Contributing
 
 This is far from a perfect product. Submit issues. Submit pull requests.
