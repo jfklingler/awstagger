@@ -8,10 +8,11 @@ package main
 import (
 	"fmt"
 
+	"gopkg.in/alecthomas/kingpin.v2"
+
 	"github.com/jfklingler/awstagger/context"
 	"github.com/jfklingler/awstagger/ec2tags"
-
-	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/jfklingler/awstagger/autoscalingtags"
 )
 
 func init() {
@@ -26,5 +27,6 @@ func main() {
 		ctx.Print(fmt.Sprintf("Processing region %s...", region))
 
 		ec2tags.Process(ctx, region)
+		autoscalingtags.Process(ctx, region)
 	}
 }

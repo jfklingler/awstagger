@@ -30,6 +30,8 @@ var (
 	doEc2Vpcs      = kingpin.Flag("ec2-vpc", "Tag EC2 VPCs. (default: true)").Default("true").Bool()
 	doEc2SGs       = kingpin.Flag("ec2-security-groups", "Tag EC2 security groups. (default: true)").Default("true").Bool()
 	doEc2NIs       = kingpin.Flag("ec2-network-interfaces", "Tag EC2 network interfaces. (default: true)").Default("true").Bool()
+	doAsgs         = kingpin.Flag("auto-scaling-groups", "Tag auto-scaling groups. (default: true)").Default("true").Bool()
+	asgPropogate   = kingpin.Flag("asg-propogate", "Propogate auto-scaling group tags. (default: true)").Default("true").Bool()
 
 	allRegions = []string{"us-east-1", "us-west-1", "us-west-2", "eu-west-1", "eu-central-1", "ap-southeast-1", "ap-southeast-2", "ap-northeast-1", "sa-east-1"}
 )
@@ -42,6 +44,8 @@ type tagFlags struct {
 	Ec2Vpcs           bool
 	Ec2SecurityGroups bool
 	Ec2NetInterfaces  bool
+	AutoScalingGroups bool
+	AsgPropogate      bool
 }
 
 type Context struct {
@@ -88,6 +92,8 @@ func New() Context {
 			Ec2Vpcs:           *doEc2Vpcs,
 			Ec2SecurityGroups: *doEc2SGs,
 			Ec2NetInterfaces:  *doEc2NIs,
+			AutoScalingGroups: *doAsgs,
+			AsgPropogate:      *asgPropogate,
 		},
 	}
 }
