@@ -12,6 +12,11 @@ Primary benefits over AWS web console or command line tool are:
 
 ## Installation
 
+### Binary
+
+Grab the latest release [here](https://github.com/jfklingler/awstagger/releases). Extract it and put `awstagger`
+somewhere on your path.
+
 ### From source
 
 Install and set up [Go](https://golang.org/doc/install)
