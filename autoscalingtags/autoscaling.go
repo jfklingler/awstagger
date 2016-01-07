@@ -28,7 +28,7 @@ func Process(ctx context.Context, region string) {
 		var names []*string
 
 		for _, group := range out.AutoScalingGroups {
-			names = append(names, group.AutoScalingGroupARN)
+			names = append(names, group.AutoScalingGroupName``)
 		}
 
 		updateTags(svc, makeNewTags(ctx.Tags, ctx.TagFlags.AsgPropogate, names))
@@ -43,23 +43,19 @@ func Process(ctx context.Context, region string) {
 }
 
 func updateTags(svc *autoscaling.AutoScaling, tags []*autoscaling.Tag) {
-	resp, err := svc.CreateOrUpdateTags(&autoscaling.CreateOrUpdateTagsInput{
+	_, err := svc.CreateOrUpdateTags(&autoscaling.CreateOrUpdateTagsInput{
 		Tags: tags,
 	})
 
 	kingpin.FatalIfError(err, "Could not update tags for auto-scaling groups: %s", tags)
-
-	fmt.Println(resp)
 }
 
 func deleteTags(svc *autoscaling.AutoScaling, tags []*autoscaling.Tag) {
-	resp, err := svc.DeleteTags(&autoscaling.DeleteTagsInput{
+	_, err := svc.DeleteTags(&autoscaling.DeleteTagsInput{
 		Tags: tags,
 	})
 
 	kingpin.FatalIfError(err, "Could not delete tags for auto-scaling groups: %s", tags)
-
-	fmt.Println(resp)
 }
 
 func printTags(ctx context.Context, svc *autoscaling.AutoScaling) {
@@ -85,7 +81,8 @@ func makeNewTags(tags map[string]string, prop bool, asgs []*string) []*autoscali
 
 	for _, asg := range asgs {
 		for k, v := range tags {
-			astags = append(astags, makeTag(k, &v, &prop, asg))
+			vx := v
+			astags = append(astags, makeTag(k, &vx, &prop, asg))
 		}
 	}
 

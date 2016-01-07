@@ -13,6 +13,7 @@ import (
 	"github.com/jfklingler/awstagger/context"
 	"github.com/jfklingler/awstagger/ec2tags"
 	"github.com/jfklingler/awstagger/autoscalingtags"
+	"github.com/jfklingler/awstagger/elasticsearch"
 )
 
 func init() {
@@ -28,5 +29,6 @@ func main() {
 
 		ec2tags.Process(ctx, region)
 		autoscalingtags.Process(ctx, region)
+		elasticsearch.Process(ctx, region)
 	}
 }

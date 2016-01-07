@@ -32,6 +32,7 @@ var (
 	doEc2NIs       = kingpin.Flag("ec2-network-interfaces", "Tag EC2 network interfaces. (default: true)").Default("true").Bool()
 	doAsgs         = kingpin.Flag("auto-scaling-groups", "Tag auto-scaling groups. (default: true)").Default("true").Bool()
 	asgPropogate   = kingpin.Flag("asg-propogate", "Propogate auto-scaling group tags. (default: true)").Default("true").Bool()
+	doES           = kingpin.Flag("elastic-search", "Tag elastic search domains. (default: true)").Default("true").Bool()
 
 	allRegions = []string{"us-east-1", "us-west-1", "us-west-2", "eu-west-1", "eu-central-1", "ap-southeast-1", "ap-southeast-2", "ap-northeast-1", "sa-east-1"}
 )
@@ -46,6 +47,7 @@ type tagFlags struct {
 	Ec2NetInterfaces  bool
 	AutoScalingGroups bool
 	AsgPropogate      bool
+	ElasticSearch     bool
 }
 
 type Context struct {
@@ -94,6 +96,7 @@ func New() Context {
 			Ec2NetInterfaces:  *doEc2NIs,
 			AutoScalingGroups: *doAsgs,
 			AsgPropogate:      *asgPropogate,
+			ElasticSearch:     *doES,
 		},
 	}
 }

@@ -78,14 +78,12 @@ func updateTags(ctx context.Context, svc ec2.EC2, resourceIds []*string) {
 		return
 	}
 
-	resp, err := svc.CreateTags(&ec2.CreateTagsInput{
+	_, err := svc.CreateTags(&ec2.CreateTagsInput{
 		Resources: resourceIds,
 		Tags:      tagArgsToEc2Tags(ctx.Tags),
 	})
 
 	kingpin.FatalIfError(err, "Could not update tags for EC2 resources %s", resourceIds)
-
-	fmt.Println(resp)
 }
 
 func deleteTags(ctx context.Context, svc ec2.EC2, resourceIds []*string) {
@@ -93,14 +91,12 @@ func deleteTags(ctx context.Context, svc ec2.EC2, resourceIds []*string) {
 		return
 	}
 
-	resp, err := svc.DeleteTags(&ec2.DeleteTagsInput{
+	_, err := svc.DeleteTags(&ec2.DeleteTagsInput{
 		Resources: resourceIds,
 		Tags:      rmtagArgsToEc2Tags(ctx.RmTags),
 	})
 
 	kingpin.FatalIfError(err, "Could not delete tags for EC2 resources %s", resourceIds)
-
-	fmt.Println(resp)
 }
 
 func getTags(svc ec2.EC2, resourceIds []*string) ec2.DescribeTagsOutput {
@@ -137,8 +133,9 @@ func rmtagArgsToEc2Tags(tags []string) []*ec2.Tag {
 	var ec2Tags []*ec2.Tag
 
 	for _, k := range tags {
+		kx := k
 		ec2Tags = append(ec2Tags, &ec2.Tag{
-			Key: &k,
+			Key: &kx,
 		})
 	}
 
@@ -149,9 +146,10 @@ func tagArgsToEc2Tags(tags map[string]string) []*ec2.Tag {
 	var ec2Tags []*ec2.Tag
 
 	for k, v := range tags {
+		kx, vx := k, v
 		ec2Tags = append(ec2Tags, &ec2.Tag{
-			Key:   &k,
-			Value: &v,
+			Key:   &kx,
+			Value: &vx,
 		})
 	}
 
