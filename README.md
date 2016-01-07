@@ -53,3 +53,8 @@ awstagger --verbose --region us-east-1 --tag key1=value1 --tag key2=value2 --rm-
 ## Contributing
 
 This is far from a perfect product. Submit issues. Submit pull requests.
+
+## Apologies
+
+This my first attempt at doing anything with Go. I'm sure I bungled all kinds of things. If you see something stupid,
+please tell me why it's stupid and how it should be done.
