@@ -28,7 +28,7 @@ func Process(ctx context.Context, region string) {
 		var names []*string
 
 		for _, group := range out.AutoScalingGroups {
-			names = append(names, group.AutoScalingGroupName``)
+			names = append(names, group.AutoScalingGroupName)
 		}
 
 		updateTags(svc, makeNewTags(ctx.Tags, ctx.TagFlags.AsgPropogate, names))
