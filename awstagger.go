@@ -17,7 +17,7 @@ import (
 )
 
 func init() {
-	kingpin.Version("0.0.1")
+	kingpin.Version("0.0.2")
 	kingpin.Parse()
 }
 
